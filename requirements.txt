@@ -1,1 +1,7 @@
-
+boto3==1.26.0       # AWS SDK for Python (for Glue, S3, Lambda)
+pyspark==3.3.1      # Apache Spark for ETL processing
+pandas==1.5.3       # Data manipulation
+numpy==1.24.2       # Numerical operations
+sqlalchemy==1.4.39  # ORM for Redshift connection
+psycopg2-binary==2.9.5 # PostgreSQL driver for Redshift
+jsonschema==4.17.3  # For JSON config validation
