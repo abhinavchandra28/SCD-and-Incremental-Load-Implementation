@@ -1,0 +1,6 @@
+{
+    "s3_bucket": "your-etl-bucket",
+    "redshift_jdbc_url": "jdbc:redshift://your-redshift-cluster.amazonaws.com:5439/dev",
+    "redshift_user": "admin",
+    "redshift_password": "yourpassword"
+}
