@@ -1,0 +1,14 @@
+{
+    "Comment": "Step Function to automate ETL workflow",
+    "StartAt": "TriggerGlueJob",
+    "States": {
+        "TriggerGlueJob": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::glue:startJobRun",
+            "Parameters": {
+                "JobName": "SCD_ETL_Job"
+            },
+            "End": true
+        }
+    }
+}
