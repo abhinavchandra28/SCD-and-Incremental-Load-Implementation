@@ -1,20 +1,22 @@
-
-import json
 import boto3
+import json
 
-glue_client = boto3.client("glue")
+sfn_client = boto3.client("stepfunctions")
 
 def lambda_handler(event, context):
-    print("Event received:", json.dumps(event, indent=2))
-    
-    # Extract bucket & file name from event
-    bucket_name = event['Records'][0]['s3']['bucket']['name']
-    file_name = event['Records'][0]['s3']['object']['key']
+    # Extract S3 bucket & file name
+    bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
+    file_key = event["Records"][0]["s3"]["object"]["key"]
 
-    print(f"New file detected: {file_name} in {bucket_name}")
+    print(f"New file detected: s3://{bucket_name}/{file_key}")
 
-    # Trigger Glue Job
-    response = glue_client.start_job_run(JobName='SCD_ETL_Job')
+    # Start Step Function execution
+    response = sfn_client.start_execution(
+        stateMachineArn="arn:aws:states:us-east-1:123456789012:stateMachine:MySCDStepFunction",
+        input=json.dumps({"s3_file": f"s3://{bucket_name}/{file_key}"})
+    )
 
-    print("Glue ETL Job triggered successfully:", response['JobRunId'])
-    return {"statusCode": 200, "body": "Glue Job Started"}
+    return {
+        "statusCode": 200,
+        "body": json.dumps("Step Function triggered successfully!")
+    }
