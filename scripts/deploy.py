@@ -58,3 +58,17 @@ response = lambda_client.create_function(
     Code={"ZipFile": lambda_code}
 )
 print("Lambda function created successfully!")
+
+# Deploy Step Function
+stepfunctions_client = boto3.client("stepfunctions")
+
+with open("workflows/step_function.json") as f:
+    step_function_definition = json.load(f)
+
+response = stepfunctions_client.create_state_machine(
+    name="SCD_ETL_Workflow",
+    roleArn=role["Role"]["Arn"],
+    definition=json.dumps(step_function_definition)
+)
+
+print("Step Function created successfully!")
