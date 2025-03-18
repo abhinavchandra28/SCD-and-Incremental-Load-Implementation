@@ -1,14 +1,68 @@
 {
-    "Comment": "Step Function to automate ETL workflow",
+    "Comment": "Step Function for S3-Triggered Glue ETL",
     "StartAt": "TriggerGlueJob",
     "States": {
         "TriggerGlueJob": {
             "Type": "Task",
             "Resource": "arn:aws:states:::glue:startJobRun",
             "Parameters": {
-                "JobName": "SCD_ETL_Job"
+                "JobName": "SCD_ETL_Job",
+                "Arguments": {
+                    "--input_file": "$.s3_file"
+                }
             },
+            "ResultPath": "$.JobRunId",
+            "Next": "WaitForCompletion"
+        },
+        "WaitForCompletion": {
+            "Type": "Wait",
+            "Seconds": 120,
+            "Next": "CheckGlueJobStatus"
+        },
+        "CheckGlueJobStatus": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::glue:getJobRun",
+            "Parameters": {
+                "JobName": "SCD_ETL_Job",
+                "RunId.$": "$.JobRunId.JobRunId"
+            },
+            "ResultPath": "$.JobStatus",
+            "Next": "IsJobComplete"
+        },
+        "IsJobComplete": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.JobStatus.JobRun.JobRunState",
+                    "StringEquals": "SUCCEEDED",
+                    "Next": "Success"
+                },
+                {
+                    "Variable": "$.JobStatus.JobRun.JobRunState",
+                    "StringEquals": "FAILED",
+                    "Next": "TriggerFailureAlert"
+                }
+            ]
+        },
+        "TriggerFailureAlert": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::sns:publish",
+            "Parameters": {
+                "TopicArn": "arn:aws:sns:us-east-1:123456789012:GlueFailureAlerts",
+                "Message": "AWS Glue job failed! Check logs for details.",
+                "Subject": "AWS Glue Job Failure Alert"
+            },
+            "Next": "Failure"
+        },
+        "Success": {
+            "Type": "Pass",
+            "Result": "Glue Job Completed Successfully",
             "End": true
+        },
+        "Failure": {
+            "Type": "Fail",
+            "Error": "GlueJobFailed",
+            "Cause": "AWS Glue job failed"
         }
     }
 }
